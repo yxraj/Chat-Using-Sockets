@@ -1,6 +1,8 @@
 const http = require('http');
 const express = require('express');
 const { Server } = require("socket.io");
+const PORT = process.env.PORT || 9000;
+
 
 const app = express();
 const server = http.createServer(app);
@@ -49,6 +51,6 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + "/public/index.html");
 });
 
-server.listen(9000, () => {
-  console.log(`Server started at 9000`);
+server.listen(PORT, () => {
+  console.log(`Server started at ${PORT}`);
 });

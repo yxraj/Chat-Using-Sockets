@@ -2,11 +2,18 @@ const http = require('http');
 const express = require('express');
 const { Server } = require("socket.io");
 const PORT = process.env.PORT || 9000;
-
+const cors = require('cors');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+app.use(cors());
 
 const users = {}; // To store user information
 const alertClasses = ['alert-primary', 'alert-secondary', 'alert-success', 'alert-danger', 'alert-warning', 'alert-info', 'alert-light', 'alert-dark'];

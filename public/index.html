@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        .center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .form-floating {
+            width: 360px;
+        }
+        .btn {
+            width: 360px;
+        }
+        #messages {
+            max-height: 400px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+        }
+        #leaveMessage, #joinMessage {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-dark navbar-expand-lg bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+      <img src="https://img.icons8.com/?size=100&id=53871&format=png&color=000000" alt="Logo" width="28" height="25"  class="d-inline-block align-text-top">
+      Chat With <strong>Anonymous</strong>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Link</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Dropdown
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Action</a></li>
+                        <li><a class="dropdown-item" href="#">Another action</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#">Something else here</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<figure class="figure m-2">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8qZIhL--gmf9cadBm5a--pZq6tbVo0a49xDH2vFTu_9JNt_Le3RoI5EE&s=10" class="figure-img img-fluid rounded">
+    <figcaption class="figure-caption">Write Your Message, And Make New Friends.</figcaption>
+</figure>
+<div class="center">
+    <div>
+        <div id="messages" class="alert alert-light"></div>
+        <div class="form-floating mb-2 m-2">
+            <input type="text" class="form-control" id="message" placeholder="Enter Your Message">
+            <label for="floatingInput">Enter Your Message</label>
+        </div>
+        <div class="center">
+            <button class="btn btn-danger" id="sendBtn">Send</button>
+        </div>
+    </div>
+</div>
+
+<!-- Leave message popup -->
+<div id="leaveMessage" class="alert alert-warning fade show" role="alert" style="display: none;">
+  <strong>User Left!</strong>
+</div>
+
+    <!-- Join message popup -->
+    <div id="joinMessage" class="alert alert-success fade show" role="alert" style="display: none;">
+      <strong>New User Joined!</strong>
+    </div>
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="usernameModal" aria-hidden="true" aria-labelledby="usernameModalLabel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="usernameModalLabel">Enter Username</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="usernameInput" class="form-control" placeholder="Enter your username">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="usernameSubmit">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    const sendBtn = document.getElementById('sendBtn');
+    const messageInput = document.getElementById('message');
+    const allMessages = document.getElementById('messages');
+    const usernameInput = document.getElementById('usernameInput');
+    const usernameSubmit = document.getElementById('usernameSubmit');
+    const leaveMessage = document.getElementById('leaveMessage');
+    const joinMessage = document.getElementById('joinMessage');
+
+    let username;
+
+    window.onload = () => {
+        const usernameModal = new bootstrap.Modal(document.getElementById('usernameModal'));
+        usernameModal.show();
+    };
+
+    usernameSubmit.addEventListener('click', () => {
+        username = usernameInput.value;
+        if (username) {
+            socket.emit('user-login', username);
+            const usernameModal = bootstrap.Modal.getInstance(document.getElementById('usernameModal'));
+            usernameModal.hide();
+        }
+    });
+
+    socket.on("message", (data) => {
+        const p = document.createElement("p");
+        p.innerText = `${data.username}: ${data.message}`;
+        p.className = `alert ${data.alertClass}`;
+        allMessages.appendChild(p);
+    });
+
+
+
+    socket.on("user-join", (username) => {
+    joinMessage.innerHTML = `${username} joined the chat`;
+    joinMessage.style.display = "block"; // Show the message
+    setTimeout(() => {
+        joinMessage.style.display = "none"; // Hide the message again
+    }, 3000);
+});
+
+    socket.on("user-leave", (username) => {
+        leaveMessage.innerHTML = `${username} left the chat`;
+        leaveMessage.style.display = "block"; // Show the message
+        setTimeout(() => {
+            leaveMessage.style.display = "none"; // Hide the message again
+        }, 3000);
+    });
+
+    sendBtn.addEventListener('click', (e) => {
+        const message = messageInput.value;
+        if (message === "") {
+            return;
+        }
+        socket.emit('user-message', { username, message });
+        e.preventDefault();
+        messageInput.value = '';
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>
